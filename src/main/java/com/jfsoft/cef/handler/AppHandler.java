@@ -7,6 +7,7 @@ package com.jfsoft.cef.handler;
 import org.cef.CefApp;
 import org.cef.CefApp.CefAppState;
 import org.cef.browser.CefBrowser;
+import org.cef.callback.CefCommandLine;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
@@ -75,5 +76,13 @@ public class AppHandler extends CefAppHandlerAdapter {
         System.out.println("CefApp: " + state);
         if (state == CefAppState.TERMINATED)
             System.exit(0);
+    }
+
+    @Override
+    public void onBeforeCommandLineProcessing(String process_type, CefCommandLine command_line) {
+        super.onBeforeCommandLineProcessing(process_type, command_line);
+        // 开启flash支持
+        command_line.appendSwitch("--enable-system-flash");
+        command_line.appendSwitch("--user-data-dir=E:/Test");
     }
 }
