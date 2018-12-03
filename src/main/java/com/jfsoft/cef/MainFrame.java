@@ -4,56 +4,52 @@
 
 package com.jfsoft.cef;
 
-import java.awt.BorderLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
 import com.jfsoft.cef.dialog.DownloadDialog;
 import com.jfsoft.cef.handler.*;
 import com.jfsoft.cef.ui.ControlPanel;
-import com.jfsoft.cef.ui.MenuBar;
 import com.jfsoft.cef.ui.StatusPanel;
 import org.cef.CefApp;
 import org.cef.CefApp.CefVersion;
 import org.cef.CefClient;
 import org.cef.CefSettings;
-
 import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
-import org.cef.browser.CefRequestContext;
 import org.cef.handler.CefDisplayHandlerAdapter;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.cef.handler.CefRequestContextHandlerAdapter;
-import org.cef.network.CefCookieManager;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Properties;
 
 public class MainFrame extends BrowserFrame {
     private static final long serialVersionUID = -2295538706810864538L;
+    private String cache_path = "./cache";
 
     public static void main(String[] args) {
         // OSR mode is enabled by default on Linux.
         // and disabled by default on Windows and Mac OS X.
         boolean osrEnabledArg = OS.isLinux();
-        String cookiePath = "./cache";
-        for (String arg : args) {
-            arg = arg.toLowerCase();
-            if (!OS.isLinux() && arg.equals("--off-screen-rendering-enabled")) {
-                osrEnabledArg = true;
-            } else if (arg.startsWith("--cookie-path=")) {
-                cookiePath = arg.substring("--cookie-path=".length());
-                File testPath = new File(cookiePath);
-                if (!testPath.isDirectory() || !testPath.canWrite()) {
-                    System.out.println("Can't use " + cookiePath + " as cookie directory. Check if it exists and if it is writable");
-                    cookiePath = null;
-                } else {
-                    System.out.println("Storing cookies in " + cookiePath);
-                }
-            }
-        }
+        String cookiePath = null;
+//        for (String arg : args) {
+//            arg = arg.toLowerCase();
+//            if (!OS.isLinux() && arg.equals("--off-screen-rendering-enabled")) {
+//                osrEnabledArg = true;
+//            } else if (arg.startsWith("--cookie-path=")) {
+//                cookiePath = arg.substring("--cookie-path=".length());
+//                File testPath = new File(cookiePath);
+//                if (!testPath.isDirectory() || !testPath.canWrite()) {
+//                    System.out.println("Can't use " + cookiePath + " as cookie directory. Check if it exists and if it is writable");
+//                    cookiePath = null;
+//                } else {
+//                    System.out.println("Storing cookies in " + cookiePath);
+//                }
+//            }
+//        }
 
         System.out.println("Offscreen rendering " + (osrEnabledArg ? "enabled" : "disabled"));
 
@@ -68,7 +64,10 @@ public class MainFrame extends BrowserFrame {
             }
         });
 
-        frame.setSize(1200, 800);
+//        Image icon = Toolkit.getDefaultToolkit().getImage("./image/logo.gif");
+//        frame.setSize(1200, 800);
+//        frame.setIconImage(new Image);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
     }
 
@@ -77,7 +76,7 @@ public class MainFrame extends BrowserFrame {
     private final CefBrowser browser_;
     private ControlPanel control_pane_;
     private StatusPanel status_panel_;
-    private final CefCookieManager cookieManager_;
+//    private final CefCookieManager cookieManager_;
 
     public MainFrame(boolean osrEnabled, String cookiePath, String[] args) {
 
@@ -86,11 +85,13 @@ public class MainFrame extends BrowserFrame {
         //    chromium or CEF related switches/attributes in
         //    the native world.
         CefSettings settings = new CefSettings();
-        settings.windowless_rendering_enabled = osrEnabled;
-        settings.remote_debugging_port = 8888;
+        settings.windowless_rendering_enabled = false;
+        settings.cache_path = cache_path;
+        settings.remote_debugging_port = 8088;
+        settings.persist_session_cookies = true;
         // try to load URL "about:blank" to see the background color
-        settings.background_color = settings.new ColorType(100, 255, 242, 211);
-        CefApp myApp = CefApp.getInstance(args, settings);
+//        settings.background_color = settings.new ColorType(100, 255, 242, 211);
+        CefApp myApp = CefApp.getInstance(settings);
         CefVersion version = myApp.getVersion();
         System.out.println("Using:\n" + version);
 
@@ -119,7 +120,7 @@ public class MainFrame extends BrowserFrame {
         client_.addDragHandler(new DragHandler());
         client_.addGeolocationHandler(new GeolocationHandler(this));
         client_.addJSDialogHandler(new JSDialogHandler());
-        client_.addKeyboardHandler(new KeyboardHandler());
+        client_.addKeyboardHandler(new KeyboardHandler(this));
         client_.addRequestHandler(new RequestHandler(this));
 
         //    Beside the normal handler instances, we're registering a MessageRouter
@@ -161,7 +162,6 @@ public class MainFrame extends BrowserFrame {
         client_.addLoadHandler(new CefLoadHandlerAdapter() {
 
 
-
             @Override
             public void onLoadingStateChange(CefBrowser browser,
                                              boolean isLoading,
@@ -201,62 +201,75 @@ public class MainFrame extends BrowserFrame {
         //
         //    If the user has specified the application parameter "--cookie-path="
         //    we provide our own cookie manager which persists cookies in a directory.
-        CefRequestContext requestContext = null;
-        if (cookiePath != null) {
-            cookieManager_ = CefCookieManager.createManager(cookiePath, false);
-            requestContext = CefRequestContext.createContext(
-                    new CefRequestContextHandlerAdapter() {
-                        @Override
-                        public CefCookieManager getCookieManager() {
-                            return cookieManager_;
-                        }
-                    });
-        } else {
-            cookieManager_ = CefCookieManager.getGlobalManager();
+//        CefRequestContext requestContext = null;
+//        if (cookiePath != null) {
+//            cookieManager_ = CefCookieManager.createManager(cookiePath, false);
+//            requestContext = CefRequestContext.createContext(
+//                    new CefRequestContextHandlerAdapter() {
+//                        @Override
+//                        public CefCookieManager getCookieManager() {
+//                            return cookieManager_;
+//                        }
+//                    });
+//        } else {
+//            cookieManager_ = CefCookieManager.getGlobalManager();
+//        }
+
+        Properties properties = new Properties();
+        String url = null;
+        // 使用ClassLoader加载properties配置文件生成对应的输入流
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader("./config/config.properties"));
+            if (bufferedReader != null) {
+                properties.load(bufferedReader);
+                url = properties.getProperty("app.default.url");
+            } else {
+                url = "http://www.baidu.com";
+            }
+        } catch (Exception e) {
+            url = "http://www.baidu.com";
+            e.printStackTrace();
         }
-        browser_ = client_.createBrowser("http://www.baidu.com",
-                osrEnabled,
-                false,
-                requestContext);
+        browser_ = client_.createBrowser(url, false, false);
 
         setBrowser(client_, browser_);
 
         //    Last but not least we're setting up the UI for this example implementation.
         getContentPane().add(createContentPanel(), BorderLayout.CENTER);
-        MenuBar menuBar = new MenuBar(this,
-                browser_,
-                control_pane_,
-                downloadDialog,
-                cookieManager_);
-
-        menuBar.addBookmark("Binding Test", "file:///www/binding_test.html");
-        menuBar.addBookmark("Binding Test 2", "file:///www/binding_test2.html");
-        menuBar.addBookmark("Download Test", "http://cefbuilds.com");
-        menuBar.addBookmark("Geolocation Test", "http://slides.html5rocks.com/#geolocation");
-        menuBar.addBookmark("Login Test (username:pumpkin, password:pie)", "http://www.colostate.edu/~ric/protect/your.html");
-        menuBar.addBookmark("Certificate-error Test", "https://www.k2go.de");
-        menuBar.addBookmark("Resource-Handler Test", "http://www.foo.bar/");
-        menuBar.addBookmark("Scheme-Handler Test 1: (scheme \"client\")", "client://tests/handler.html");
-        menuBar.addBookmark("Scheme-Handler Test 2: (scheme \"search\")", "search://do a barrel roll/");
-        menuBar.addBookmark("Spellcheck test", "file:///www/spellcheck.html");
-        menuBar.addBookmark("Test local Storage", "file:///www/localstorage.html");
-        menuBar.addBookmarkSeparator();
-        menuBar.addBookmark("javachromiumembedded", "https://bitbucket.org/chromiumembedded/java-cef");
-        menuBar.addBookmark("chromiumembedded", "https://bitbucket.org/chromiumembedded/cef");
-        setJMenuBar(menuBar);
+//        MenuBar menuBar = new MenuBar(this,
+//                browser_,
+//                control_pane_,
+//                downloadDialog,
+//                cookieManager_);
+//
+//        menuBar.addBookmark("Binding Test", "file:///www/binding_test.html");
+//        menuBar.addBookmark("Binding Test 2", "file:///www/binding_test2.html");
+//        menuBar.addBookmark("Download Test", "http://cefbuilds.com");
+//        menuBar.addBookmark("Geolocation Test", "http://slides.html5rocks.com/#geolocation");
+//        menuBar.addBookmark("Login Test (username:pumpkin, password:pie)", "http://www.colostate.edu/~ric/protect/your.html");
+//        menuBar.addBookmark("Certificate-error Test", "https://www.k2go.de");
+//        menuBar.addBookmark("Resource-Handler Test", "http://www.foo.bar/");
+//        menuBar.addBookmark("Scheme-Handler Test 1: (scheme \"client\")", "client://tests/handler.html");
+//        menuBar.addBookmark("Scheme-Handler Test 2: (scheme \"search\")", "search://do a barrel roll/");
+//        menuBar.addBookmark("Spellcheck test", "file:///www/spellcheck.html");
+//        menuBar.addBookmark("Test local Storage", "file:///www/localstorage.html");
+//        menuBar.addBookmarkSeparator();
+//        menuBar.addBookmark("javachromiumembedded", "https://bitbucket.org/chromiumembedded/java-cef");
+//        menuBar.addBookmark("chromiumembedded", "https://bitbucket.org/chromiumembedded/cef");
+//        setJMenuBar(menuBar);
     }
 
     private JPanel createContentPanel() {
         JPanel contentPanel = new JPanel(new BorderLayout());
         control_pane_ = new ControlPanel(browser_);
         status_panel_ = new StatusPanel();
-        contentPanel.add(control_pane_, BorderLayout.NORTH);
+//        contentPanel.add(control_pane_, BorderLayout.NORTH);
 
         // 4) By calling getUIComponen() on the CefBrowser instance, we receive
         //    an displayable UI component which we can add to our application.
         contentPanel.add(browser_.getUIComponent(), BorderLayout.CENTER);
 
-        contentPanel.add(status_panel_, BorderLayout.SOUTH);
+//        contentPanel.add(status_panel_, BorderLayout.SOUTH);
         return contentPanel;
     }
 }

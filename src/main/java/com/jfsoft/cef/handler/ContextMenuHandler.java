@@ -35,17 +35,19 @@ public class ContextMenuHandler implements CefContextMenuHandler {
         model.clear();
 
         // Navigation menu
-        model.addItem(MenuId.MENU_ID_BACK, "Back");
+        model.addItem(MenuId.MENU_ID_BACK, "后退");
         model.setEnabled(MenuId.MENU_ID_BACK, browser.canGoBack());
 
-        model.addItem(MenuId.MENU_ID_FORWARD, "Forward");
+        model.addItem(MenuId.MENU_ID_FORWARD, "前进");
         model.setEnabled(MenuId.MENU_ID_FORWARD, browser.canGoForward());
+        model.addItem(MenuId.MENU_ID_RELOAD_NOCACHE, "强制刷新");
 
         model.addSeparator();
-        model.addItem(MenuId.MENU_ID_FIND, "Find...");
+        model.addItem(MenuId.MENU_ID_FIND, "查找...");
         if (params.hasImageContents() && params.getSourceUrl() != null)
-            model.addItem(MenuId.MENU_ID_USER_FIRST, "Download Image...");
-        model.addItem(MenuId.MENU_ID_VIEW_SOURCE, "View Source...");
+            model.addItem(MenuId.MENU_ID_USER_FIRST, "下载图像...");
+        model.addItem(MenuId.MENU_ID_VIEW_SOURCE, "查看网页源代码...");
+
 
         Vector<String> suggestions = new Vector<String>();
         params.getDictionarySuggestions(suggestions);
