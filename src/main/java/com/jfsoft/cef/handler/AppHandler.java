@@ -83,6 +83,5 @@ public class AppHandler extends CefAppHandlerAdapter {
         super.onBeforeCommandLineProcessing(process_type, command_line);
         // 开启flash支持
         command_line.appendSwitch("--enable-system-flash");
-        command_line.appendSwitch("--user-data-dir=E:/Test");
     }
 }

@@ -162,4 +162,6 @@ public class RequestHandler extends CefRequestHandlerAdapter {
                                           TerminationStatus status) {
         System.out.println("render process terminated: " + status);
     }
+
+    
 }

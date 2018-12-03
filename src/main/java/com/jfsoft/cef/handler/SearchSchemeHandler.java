@@ -9,6 +9,10 @@ import org.cef.callback.CefCallback;
 import org.cef.handler.CefResourceHandlerAdapter;
 import org.cef.network.CefRequest;
 
+import java.net.IDN;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * In this case we create a new CefRequest object with
  * http://www.google.com/#q=<entered value without scheme search>
@@ -30,12 +34,21 @@ public class SearchSchemeHandler extends CefResourceHandlerAdapter {
                                   CefCallback callback) {
         // cut away "scheme://"
         String requestUrl = request.getURL();
-        String newUrl = requestUrl.substring(scheme.length() + 3);
+        String newUrl = requestUrl.substring(scheme.length()+3);
         // cut away a trailing "/" if any
-        if (newUrl.indexOf('/') == newUrl.length() - 1) {
-            newUrl = newUrl.substring(0, newUrl.length() - 1);
+        if (newUrl.indexOf('/') == newUrl.length()-1) {
+            newUrl = newUrl.substring(0, newUrl.length()-1);
         }
-        newUrl = "http://www.baidu.com/#q=" + newUrl;
+
+        try {
+            URI tempUri = new URI(requestUrl);
+            String asciiDomain = tempUri.getHost();
+            String unicodeDomain = IDN.toUnicode(asciiDomain);
+            newUrl = newUrl.replace(asciiDomain, unicodeDomain);
+        } catch (URISyntaxException e) {
+        }
+
+        newUrl = "http://www.baidu.com/s?wd=" + newUrl;
 
         CefRequest newRequest = CefRequest.create();
         if (newRequest != null) {
