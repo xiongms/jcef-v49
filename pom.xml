@@ -11,6 +11,11 @@
     <name>jcef-v49</name>
     <dependencies>
         <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.bitbucket.johness</groupId>
             <artifactId>java-cef</artifactId>
             <version>49.87.win32.2</version>

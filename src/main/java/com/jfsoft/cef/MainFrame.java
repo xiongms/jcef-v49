@@ -6,6 +6,7 @@ package com.jfsoft.cef;
 
 import com.jfsoft.cef.dialog.DownloadDialog;
 import com.jfsoft.cef.handler.*;
+import com.jfsoft.cef.server.WsServer;
 import com.jfsoft.cef.ui.ControlPanel;
 import com.jfsoft.cef.ui.StatusPanel;
 import org.cef.CefApp;
@@ -17,6 +18,7 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
 import org.cef.handler.CefDisplayHandlerAdapter;
 import org.cef.handler.CefLoadHandlerAdapter;
+import org.java_websocket.WebSocketImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -69,6 +71,12 @@ public class MainFrame extends BrowserFrame {
 //        frame.setIconImage(new Image);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
+
+        // websocket
+        WebSocketImpl.DEBUG = false;
+        int port = 8888; // 端口
+        WsServer s = new WsServer(port);
+        s.start();
     }
 
     private final CefClient client_;
